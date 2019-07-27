@@ -28,6 +28,15 @@
     * [5\.激活模块](#5%E6%BF%80%E6%B4%BB%E6%A8%A1%E5%9D%97)
     * [6\.认识MTV](#6%E8%AE%A4%E8%AF%86mtv)
     * [7\.API交互](#7api%E4%BA%A4%E4%BA%92)
+    * [8\.路由设计](#8%E8%B7%AF%E7%94%B1%E8%AE%BE%E8%AE%A1)
+    * [9\.复制轮子](#9%E5%A4%8D%E5%88%B6%E8%BD%AE%E5%AD%90)
+    * [10\.从V到T](#10%E4%BB%8Ev%E5%88%B0t)
+    * [11\.模板语言](#11%E6%A8%A1%E6%9D%BF%E8%AF%AD%E8%A8%80)
+    * [12\.解析投票](#12%E8%A7%A3%E6%9E%90%E6%8A%95%E7%A5%A8)
+    * [13\.提交评论](#13%E6%8F%90%E4%BA%A4%E8%AF%84%E8%AE%BA)
+    * [14\.管理页面](#14%E7%AE%A1%E7%90%86%E9%A1%B5%E9%9D%A2)
+    * [15\.搞定首页](#15%E6%90%9E%E5%AE%9A%E9%A6%96%E9%A1%B5)
+    * [16\.最终总结](#16%E6%9C%80%E7%BB%88%E6%80%BB%E7%BB%93)
 
 &nbsp;
 
@@ -1031,14 +1040,14 @@ from django.db import models
 
 class Question(models.Model):
     question_text = models.CharField(max_length=200)
-    author = models.CharField(max_length=50)
+    author = models.CharField(max_length=50, default="Master")
     pub_date = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.question_text
 
 class Choice(models.Model):
     choice_text = models.CharField(max_length=200)
-    author = models.CharField(max_length=50)
+    author = models.CharField(max_length=50, default="Master")
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     def __str__(self):
         return self.choice_text
@@ -1079,6 +1088,8 @@ class Choice(models.Model):
 
 这些配置选项都是默认自带的选项，在生产环境中我们肯定要主动去添加一些配置进行项目上线。
 
+我们重点关注的配置项有ALLOWED_HOSTS、INSTALLED_APPS和DATABASES等。
+
 这些都是要自己主动学习的，参考文档还是要认准官方文档，主要了解有哪些配置选项：
 
 https://docs.djangoproject.com/zh-hans/2.1/ref/settings/
@@ -1106,6 +1117,10 @@ https://docs.djangoproject.com/zh-hans/2.1/ref/settings/
 言归正传，我们要激活模块了，自然是要往INSTALLED_APPS添加我们刚创建的BBS应用
 
 添加进去```'bbs.apps.BbsConfig',```在第一行，进行保存，然后回到ConEmu
+
+编写的规律你也看明白了，就是xxx.apps.XxxConfig，xxx就是应用的名字，后面的Xxx第一个字母要大写：
+
+![1563979483188](assets/1563979483188.png)
 
 输入```python manage.py makemigrations```生成数据库迁移文件，发现如下：
 
@@ -1181,5 +1196,865 @@ render()其实非常好用，用来将数据载入html模板完全没任何问�
 
 #### 7.API交互
 
+所谓的API交互，实则就是一个往数据库添加数据的过程，项目上线的时候是怎么做的呢？
 
+就是用户通过键盘鼠标，点击提交按钮以后，通过API的方式往数据库添加数据，这个过程很好理解。
+
+这个时候，我们需要深入一下这个过程的原理和背后的数据类型。
+
+这个数据类型就叫做QuerySet！是不是很熟悉？
+
+![1563980019211](assets/1563980019211.png)
+
+看到了吗，不管是投票标题的数据，还是投票选项的数据，全都是用QuerySet，类似集合的数据类型去存储的！
+
+那么我们从官方严格查询一下，这个QuerySet是什么：
+
+实际上它是数据库接口，全名是QuerySet API，这是什么意思呢，你从模型里面连接到数据库表去拿出数据，是通过QuerySet API调用的，自然调用出来的数据类型都是QuerySet集合！
+
+那么，根据这个QuerySet，同样应当是分为增删改查的角度去学习数据库的操作：
+
+```
+增：
+	Model，根据模型名字与字段参数创建对象
+	save，保存到数据库
+删：
+	delete,删除操作
+	不需要save
+改：
+	=，更新字段内容
+	save，保存到数据库
+查：
+	all，取出所有的对象，支持切片索引
+	filter，过滤操作，双下划线添加具体方法或条件
+	exclude，排除内容，与filter进行链式调用
+	order_by，排序操作，减号是逆序
+```
+
+&nbsp;
+
+OK，接下来我们就进入QuerySet API的操作环节，输入```python manage.py shell```进入命令行
+
+第一句应该干嘛？当然是引入bbs应用的两个模型了！
+
+输入```from bbs.models import Question, Choice```到shell，完成两个模型的引入。
+
+然后我们应该干嘛啊?当然是创建一个帖子了，怎么创建？看模型名字与字段的变量！
+
+```python
+q = Question(question_text = "我这波五杀是什么水平？",author="嘤嘤怪")
+q.question_text
+q.author
+```
+
+![1563981289433](assets/1563981289433.png)
+
+然后我们可以看看上面的改，可以直接用等于号=修改字段的值，那我们就修改一波作者的名字：
+
+```python
+q.author = "小灰灰"
+q
+q.author
+```
+
+![1563981404773](assets/1563981404773.png)
+
+你们可能就会疑问，我这个不是三个字段参数吗？还有个pub_date字段呢？
+
+![1563983632551](assets/1563983632551.png)
+
+我这个pub_date字段的参数说的很清楚了，就算你一个个单词翻译也是自动现在添加，说明这个日期字段属于自动添加现在时间的字段，并不需要我们操作。
+
+![1563983689897](assets/1563983689897.png)
+
+接下来就到了最关键的部分了，我该怎么创建这个帖子的评论呢？
+
+首先根据我们的ForeiginKey关系字段，得知多个Choice对应一个Question。
+
+那么呼之欲出的就是choice_set，是一个外键集合，在这儿直接创建帖子的评论：
+
+当我确认好Choice的字段参数后，输入```q.choice_set.create(choice_text="我觉得不行",author="阿岳")```
+
+![1563981854830](assets/1563981854830.png)
+
+什么？？？为啥报错了？？再翻到上面看看大纲，我扇了自己一巴掌。
+
+我描写的很清楚，数据库的两种操作需要save()，一个是创建的时候，一个是修改的时候，然而我在上面又是创建又是修改的，不过这些操作都可以一次性save()保存。
+
+```
+一定要记住，在Django中的QuerySet API操作的时候，增和改都需要save一下。
+```
+
+好了，在经过```q.save()```之后，我们继续```q.choice_set.create(choice_text="我觉得不行",author="阿岳")```
+
+多创建几个评论算了：
+
+```python
+q.choice_set.create(choice_text="其实我觉得还可以",author="狗哥")
+q.choice_set.create(choice_text="阿岳真的好严格",author="狗哥")
+q.choice_set.create(choice_text="楼主有点skr啊",author="吴亦凡")
+```
+
+这个时候，查询帖子的所有评论的操作是```q.choice_set.all()```
+
+![1563982529506](assets/1563982529506.png)
+
+我突然觉得查询得到的结果，非常不直观，所以我们需要修改一下模型里面的```__str__```函数
+
+![1563982646577](assets/1563982646577.png)
+
+这样一来，我们查询的时候，能够最直观地感受到这个帖子谁创建的，这个评论是谁发的。
+
+为了让这个设置生效，我们需要重启一下命令行：```exit()```+```python manage.py shell```
+
+这样一来，我肯定丢失了原来的环境，我该怎么找回我原来的变量呢?
+
+```python
+from bbs.models import Question, Choice
+q = Question.objects.all()[0]
+q
+q.choice_set.all()
+```
+
+![1563982877414](assets/1563982877414.png)
+
+这么一看，是不是一切都回来了？这看上去是不是要好多了？
+
+&nbsp;
+
+在这儿停顿一下，我们到现在都干了什么，有增，有改，有查，还接触了修改模型的时候应该怎么办。
+
+现在是不是就差一个删了？删什么?狗哥说第二条评论后悔了，他想删掉，这个时候应该怎么办呢？
+
+```python
+c = q.choice_set.all()[2]
+c
+c.delete()
+q.choice_set.all()
+```
+
+![1563983051711](assets/1563983051711.png)
+
+这样一来，我们不就完成了删除评论的操作吗，而且delete()操作不需要save。
+
+&nbsp;
+
+为了更好地学习filter，exclude以及order_by的过滤方法，我决定多创建两个帖子，进行操作:
+
+```python
+q1 = Question(question_text="这个情况我还要舔够下去吗？",author="小黑黑")
+q2 = Question(question_text="我这波操作什么水平？",author="大白白")
+Question.objects.all()
+```
+
+![1563984462871](assets/1563984462871.png)
+
+咦？怎么没有两个新帖子，说了多少遍了，创建新的对象要save()！！！！！
+
+![1563984512560](assets/1563984512560.png)
+
+现在，我们先打印出三个帖子的时间，使用列表解析式```[q.pub_date for q in Question.objects.all()]```
+
+![1563984703638](assets/1563984703638.png)
+
+我们可以看到后面可以根据小时的不同来进行过滤操作，现在先来一个最简单的过滤作者名字的筛选：
+
+```Question.objects.filter(author__startswith="小")```
+
+![1563984853864](assets/1563984853864.png)
+
+这个双下划线一定要会用，这是定义过滤规则的专用符号。
+
+你甚至还可以根据创建时间的规则来过滤：```Question.objects.filter(pub_date__hour=16)```
+
+![1563984946730](assets/1563984946730.png)
+
+这两个都是在16点被创建的帖子，自然过滤出来了。
+
+至于这个exclude，我在上面也介绍了，是排除内容的操作，也可以跟filter进行链式调用，比如我想过滤出16点发布帖子的并且作者的名字开头不是小的帖子，就可以输入这样的命令进行连环过滤：
+
+```Question.objects.filter(pub_date__hour=16).exclude(author__startswith="小")```
+
+![1563985149190](assets/1563985149190.png)
+
+现在，filter和exclude会用了吗？双下划线的过滤规则会写了吗？
+
+&nbsp;
+
+再来看看最后的order_by，目前貌似只有发帖时间可以排序，先试试再说
+
+```Question.objects.order_by('pub_date')```
+
+![1563985449743](assets/1563985449743.png)
+
+这个排序也没啥意义，本来就是根据时间顺序创建的，我们来讲一下怎么逆序排序，就是用减号-
+
+```Question.objects.order_by('-pub_date')```
+
+![1563985603170](assets/1563985603170.png)
+
+现在，我已经从增删改查的角度讲解了QuerySet API的数据库操作，是不是很简单？这玩意真不难，就靠时间堆起来熟练度，你实在不会的话，你直接管理页面操作算了，但是真实开发环境都是linux，可要心里有数。
+
+&nbsp;
+
+#### 8.路由设计
+
+现在，我们的模型建好了，数据库关联好了，数据也添加上去了，现在该进入URL设计阶段了。
+
+路由设计实际上分两大步：先设计应用的urls.py，再添加到项目工程的总urls.py。
+
+首先分析bbs应用的url情况，首先是论坛首页，这个就是空的，直接默认，为首页index视图
+
+然后每个帖子都有详情页，这个详情页可以用```/detail/<int:bbs_id>/```，设置为帖子详情页detail视图
+
+然后其实还可以弄个话题页进行拓展，用```/topic/```，设置为话题topic视图
+
+好了，我们现在就开始设计路由，首先创建一波bbs/urls.py，将以下代码放进去：
+
+```python
+from django.urls import path
+from . import views
+
+app_name = "bbs"
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('topic/', views.topic, name='topic'),
+    path('detail/<int:bbs_id>/', views.detail, name='detail'),
+]
+```
+
+你直接复制进去后，肯定是会报错的，因为这个时候还没激活views.py里面的视图函数，缺少一个就会报错。
+
+所以我们为了不报错，先传下面的代码到bbs/views.py，先占好坑：
+
+```python
+from django.shortcuts import render
+from django.http import HttpResponse
+
+def index(request):
+    return HttpResponse("首页")
+
+def detail(request):
+    return HttpResponse("详情页")
+
+def topic(request):
+    return HttpResponse("话题页")
+```
+
+大功告成以后，我们应用的urls.py就弄好了，现在该轮到添加到Django项目工程的urls.py了
+
+直接加进去这一句话```path('bbs/', include('bbs.urls')),```到up2u_bbs/urls.py就完事：
+
+![1563987163290](assets/1563987163290.png)
+
+现在你可以自己启动```python manage.py runserve```来验证路由是否正常了！
+
+&nbsp;
+
+#### 9.复制轮子
+
+现在，路由设计完毕，该进一步完善一下视图函数了。
+
+事实上，我们可以反思，投票应用和bbs应用真的是大同小异，我们可以完全拷贝过来，不要重复造轮子。
+
+先全部拷贝过来，再慢慢修改，先让bbs应用出网页就可以了，最后直接前端美化，再进一步修改逻辑。
+
+先将bbs/views.py的代码编辑如下:
+
+```python
+from django.shortcuts import render
+from django.http import HttpResponse,Http404
+from django.template import loader
+
+from .models import Question,Choice
+
+def index(request):
+    latest_bbs_list = Question.objects.order_by('-pub_date')[:5]
+    template = loader.get_template('bbs/index.html')
+    context = {
+        'latest_bbs_list': latest_bbs_list,
+    }
+    return HttpResponse(template.render(context, request))
+
+def detail(request,bbs_id):
+    try:
+        bbs = Question.objects.get(pk=bbs_id)
+    except Question.DoesNotExist:
+        raise Http404("这个帖子的id不存在！")
+    return render(request, 'bbs/detail.html', {'bbs': bbs})
+
+def topic(request):
+    return HttpResponse("话题页")
+```
+
+我们的目的很简单，我们先把帖子和帖子的评论先都展现出来，既然前面有模板，为啥不直接用呢？
+
+然后创建bbs/templates/bbs/index.html，放以下代码：
+
+```html
+{% if latest_bbs_list %}
+    <ul>
+    {% for bbs in latest_bbs_list %}
+        <li><a href="{% url 'bbs:detail' bbs.id %}">{{ bbs.question_text }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No bbs are available.</p>
+{% endif %}
+```
+
+再创建bbs/templates/bbs/detail.html，放以下代码：
+
+```html
+<h1>{{ bbs.question_text }}</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+{% for one in bbs.choice_set.all %}
+    <p>{{one.choice_text}}</p>
+{% endfor %}
+```
+
+这样一来，我们是不是搞定了帖子首页和帖子评论的详情页两个部分?
+
+刷新下浏览器看看效果吧！先看看bbs应用的首页:
+
+![1563991598654](assets/1563991598654.png)
+
+然后再来看看第三个帖子的详情页，因为只有第三个帖子有评论，前面两个没有评论。
+
+![1563991631499](assets/1563991631499.png)
+
+实际上，我们点击前两个帖子，就算没有评论，也来点提示啊，所以我们可以优化一下html的代码。
+
+优化detail.html代码如下:
+
+```html
+<h1>{{ bbs.question_text }}</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+{% if bbs.choice_set.all %}
+    {% for one in bbs.choice_set.all %}
+        <p>{{one.choice_text}}</p>
+    {% endfor %}
+{% else %}
+    <p>这个帖子还没有评论呢，快来抢沙发。</p>
+{% endif %}
+```
+
+这个是怎么优化的呢，你感兴趣吗，我就画一张图给你演示吧！
+
+![1563991907356](assets/1563991907356.png)
+
+最后来看看效果图吧！
+
+![1563991929491](assets/1563991929491.png)
+
+这样一来，我们通过复制轮子的操作，快速搭建好了两个页面。
+
+&nbsp;
+
+#### 10.从V到T
+
+不要为复制轮子感到羞耻，我们可以当作用了一次示例代码，事实上，我们正好趁着这次已经搭建好的示例来一次真正的剖析教学，弄清楚从url到视图再到模板的过程！
+
+首先看看最初的bbs/urls.py，这儿是一切的起源
+
+![1564036264146](assets/1564036264146.png)
+
+这段代码到底有什么作用呢，指定这个应用的所有的urls，name参数是指向于views视图函数。
+
+注意，这儿存在一个使用技巧，就是如果你的页面需要传入参数，也就是说detail详情页:
+
+![1564036393690](assets/1564036393690.png)
+
+当你编辑detail的视图函数的时候，你必须将这个设置为函数的参数：
+
+![1564036444284](assets/1564036444284.png)
+
+也就是说，当你手动在url输入数字的时候，或者点击链接的时候，会把bbs_id的具体值传入detail函数，激活detail视图，然后就走完这个函数的内容，来到了最后的return环节：
+
+![1564036527370](assets/1564036527370.png)
+
+我推荐大家以后统一用render()，等下我们可以优化一下index视图函数。我们先来看看这个是怎么工作的，第一个request我们无需关心，这是每个视图必备的参数，代表请求。然后这个请求将拿到的数据发送给html页面。
+
+render()使用公式为```return render(request, '应用名字/xxx.html', {'需要传递的变量':需要传递的变量})```
+
+然后我们将镜头给到html文件，事实上，html的绝对路径应当是bbs/templates/bbs/xxx.html，这是硬性规定。
+
+![1564036771788](assets/1564036771788.png)
+
+只需要看第一行，直接对bbs这个变量进行操作，因为我们的函数视图传递的就是bbs变量。
+
+然后这个模板语言将计算后的结果进行渲染，得出最终的网页效果：
+
+![1564036937009](assets/1564036937009.png)
+
+现在，你弄懂从V（视图views）到T（模板templates）的过程了吗？是否清楚地认识到了MTV架构？
+
+&nbsp;
+
+在上面，我说过要优化index视图函数，我们先来看看它的代码：
+
+![1564037025065](assets/1564037025065.png)
+
+是不是觉得这个代码太啰嗦？上面不是正好教学了render()吗?直接照着公式写优化即可：
+
+```python
+def index(request):
+    latest_bbs_list = Question.objects.order_by('-pub_date')[:5]
+    return render(request,'bbs/index.html',{'latest_bbs_list':latest_bbs_list})
+```
+
+这样看上去，是不是霸气很多？以后都可以统一使用render()将参数递回模板文件。
+
+![1564037286651](assets/1564037286651.png)
+
+&nbsp;
+
+#### 11.模板语言
+
+现在，我们该干什么？当然是优化前端页面了，这个时候就要跟模板语言打交道了。
+
+所以我们正式使用模板语言编写前端页面，这个与前端中的html语言最大的区别就是只写boby标签里的内容。
+
+因为Django底层会把这个html文件进行补全渲染到网页上，还有一个就是模板语言文件属于动态网页。
+
+只要你后台的数据库发生了变动，网页就会发生变动进行数据的更新。
+
+&nbsp;
+
+帖子的首页先不着急，我们先安排一下帖子的detail详情页，这个过程我不好直播教学，所以直接放代码。
+
+（希望各位不要介意，前端页面的编写真的没什么好直播的，大家可以跟着敲，熟练一下模板语言的使用）
+
+首先先搞定detail视图，这个时候更新一下views,py的detail视图代码，因为要加入热门话题推荐：
+
+![1564039776621](assets/1564039776621.png)
+
+然后更新detail.html代码如下：
+
+```html
+<style>
+    body {
+        margin: 0 auto;
+        width: 50%;
+        padding-top: 50px;
+    }
+
+    .web-title {
+        font-size: 40px;
+        margin: 20px;
+        text-align: center;
+    }
+
+    .content {
+        border: 1px solid #000000;
+        margin-top: 20px;
+    }
+
+    .reply ul {
+        list-style-type: none;
+        margin-left: -20px;
+    }
+
+    .reply ul li {
+        border-bottom: 1px solid #eeeeee;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="web-title">UP2U - BBS</div>
+
+<div class="nav">
+    <a href="/bbs">首页</a>|
+    热门话题：
+    {% for one in latest_bbs_list %}
+        <a href="{% url 'bbs:detail' one.id %}">{{ one.question_text}}</a>
+    {% endfor %}
+</div>
+
+<div class="content">
+    <div class="one-title">话题：{{bbs.question_text}}</div>
+    <hr>
+    <div class="reply">
+        {% if bbs.choice_set.all %}
+        <ul>
+            {% for c in bbs.choice_set.all %}
+            <li>
+                <div>{{forloop.counter}}楼</div>
+                <div>{{c.author}}:{{c.choice_text}}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p>此帖子还没有评论呢~</p>
+        {% endif %}
+    </div>
+</div>
+```
+
+最终效果图是这个样子的：
+
+![1564039830604](assets/1564039830604.png)
+
+这个html代码一定要好好研究，我在里面使用了if/else语句，for语句。
+
+更需要注意的是一个小巧:```forloop.counter```，可以记录当前for循环的次数，用来打印几楼是非常好的选择。
+
+我建议你跟着敲，多多熟练一下这个模板语言的编写套路：
+
+```
+for循环：
+    {% for x in x_list %}
+    {% endfor %}
+    
+if循环：
+	{% if x_list %}
+	{% elif %}
+	{% else %}
+	{% endif %}
+	
+变量传值：
+	{{aaa}}
+	
+打印for循环次数技巧：
+	{{ forloop.counter }}
+```
+
+&nbsp;
+
+#### 12.解析投票
+
+现在我们遇到了一个重要的逻辑难关，就是如何提交评论。
+
+同样的是上面投票应用的投票逻辑，可能大家都看不明白，那么我就好好剖析一下这部分的逻辑。
+
+首先是投票应用的urls.py的设置
+
+![1564042978548](assets/1564042978548.png)
+
+我们可以看到，实际上/vote/的网页是打不开的，因为它只是用来传递数据提交结果的，相当于一个中转站。
+
+写这个的目的是要写出vote的视图函数，不然就会报错，要不怎么说是T和V双向互动呢？
+
+而且url里面有```<int:question_id>```，所以vote的参数也要带上这个question_id，但是！这个question_id是从html那儿获取的，和urls.py再无关了。所以这个url不是一个网页，是一个提交数据的中转站！
+
+![1564043084187](assets/1564043084187.png)
+
+这段函数是不是一眼看过去，是看不懂的？那我们先从html模板那儿开始分析吧！
+
+![1564043298544](assets/1564043298544.png)
+
+我会很仔细地剖解这部分的内容，让你弄明白提交数据的过程到底是怎么诞生的。
+
+首先反思一下第一行和第二行：
+
+```html
+<form action="{% url 'polls:vote' question.id %}" method="post">
+{% csrf_token %}
+```
+
+第一行是提交数据的关键，使用的方法是POST，为什么是POST而不是GET，我就不在这儿废话了。
+
+重点分析一波这个action的值，我分成三个部分：
+
+![1564043581855](assets/1564043581855.png)
+
+这三大步骤，完成之后，会发生什么？当然是被解析到了urls.py，如果当前question_id是1的话，那么这句话执行完之后，根据前面的url参数，被解析成了/polls/1/vote/地址，完成提交数据的过程。
+
+但是这个过程很短暂，因为视图函数执行很快的，所以转眼间就跳回了/polls/1/，眨眼间完成提交数据。
+
+这个提交数据的过程在哪儿？我在上面说了，就在视图函数里面。
+
+![1564043834101](assets/1564043834101.png)
+
+然后就是先抓取到当前投票的id，将你选择的那个选项给抓取到。这个选项的抓取是怎么发生的？
+
+```python
+cselected_choice = question.choice_set.get(pk=request.POST['choice'])
+```
+
+这句代码究竟是怎么完成的，重点是看这个request.POST()：
+
+request.POST()参数里面是哪来的，是表单里面的name值！
+
+![1564044044200](assets/1564044044200.png)
+
+以后写表单的时候要注意保持name的唯一性，然后通过这个name值抓到了input之后，返回的结果是什么？
+
+是value！request.POST()抓取的就是表单的value值！
+
+![1564044112000](assets/1564044112000.png)
+
+这么看来：这句代码```pk=request.POST['choice']```不就类似于```pk=1```吗？
+
+有必要总结一下:
+
+```
+request.POST()：参数是表单的name值，返回的结果是表单的value值
+```
+
+然后vote视图函数剩余的代码就更好理解了
+
+![1564044417206](assets/1564044417206.png)
+
+首先就是将计票结果加上1，save()一下，这个很好理解，重点是下面一句。
+
+这个HttpResponseRedirect实际上就是一个重定向的行为，我在前面说过了，vote不是网页，总不能提交数据成功以后就停留在这个页面吧，肯定跳转到展示结果那个页面。
+
+然后reverse()类似于刷新的行为，毕竟你更新了网页，然后参数就是指定应用的视图和试图所需要的参数。
+
+这样一来，你在```bbs/1/```上提交你投票的结果时，跳转到了```/bbs/1/vote/```完成数据的提交，完成之后又通过HttpResponseRedire + reverse重定向到```bbs/1/results```网页上，查看最新展示的结果。
+
+&nbsp;
+
+现在，经过我这个啰嗦又详细的解释之后，你是否对这个POST提交数据的过程有了一个清晰的认知？
+
+&nbsp;
+
+#### 13.提交评论
+
+当你看懂上面解析投票逻辑的内容之后，再来思考一下怎么编写提交评论的逻辑，是不是觉得简单很多了？
+
+所以我就懒得花大量笔墨解释了，也不放代码了，只放截图，自己手动敲，你可以先复制vote视图代码过来，再改名成reply视图，然后自己独立思劳怎么样去修改代码，能达到提交评论的效果。
+
+1）先将reply在urls.py占好坑
+
+![1564045142776](assets/1564045142776.png)
+
+2）在detail.html中编写提交评论的form表单
+
+![1564045208517](assets/1564045208517.png)
+
+3）全心全意攻克reply视图函数代码
+
+![1564052847502](assets/1564052847502.png)
+
+4）然后我们回到网页，去发两次评论，验证一下效果吧！
+
+![1564052897961](assets/1564052897961.png)
+
+以上的过程并不难，自己好好跟着图片瞧一瞧，自己敲出来的代码才是自己的！
+
+&nbsp;
+
+#### 14.管理页面
+
+现在，我们可以启动后台管理模板界面了，但是可不需要再新添一个管理员帐号了。
+
+因为我们在前面就已经对Django项目注册过一次管理员了，而bbs只是一个应用，我们可以直接登陆上去。
+
+但是想让BBS应用加入后台管理，你们还记得怎么做吗？
+
+编辑bbs/admin.py，将我们BBS的两个模型给加入进去：
+
+```python
+from django.contrib import admin
+
+from django.contrib import admin
+
+from .models import Question,Choice
+
+admin.site.register(Question)
+admin.site.register(Choice)
+```
+
+然后我们来到/admin/的url界面，发现已经成功注册进去
+
+![1564056201323](assets/1564056201323.png)
+
+不知道大家有没有当过百度贴吧的吧主，进行管理贴吧和删帖事务，这个过程就是类似的。
+
+在管理界面后台，我们可以进行删帖，也可以删掉帖子里面的一些恶意评论。
+
+但是你们有没有觉得，这个管理界面太过于单调，可提供的信息太少了
+
+![1564056470014](assets/1564056470014.png)
+
+光有帖子的名字，啥具体信息都没有，这还怎么维护删帖？
+
+所以我们需要升级我们的bbs/admin.py代码：
+
+1）优化帖子的详细信息
+
+![1564057292021](assets/1564057292021.png)
+
+这个到底有什么用呢？
+
+```python
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('question_text','author','pub_date')
+    
+admin.site.register(QuestionAdmin)
+```
+
+这个实际上是建立起一个视图的模型，QuestionAdmin是我们设置的视图模式，关键但还是在于这个list_display
+
+这个```list_display```是什么意思呢，就是不可修改的信息列表，你会看到这样的效果：
+
+![1564057482270](assets/1564057482270.png)
+
+你做百度贴吧吧主的时候，你一定会遇到发帖标题不合格的情况，或者说有人发了一个质量帖子，但是标题有错别字，你作为论坛的管理员自然拥有这些权限。
+
+所以这儿再介绍一个参数：```list_editable```，可以修改编辑的信息列表，注意，一定要加个逗号
+
+（你可以自己试着判断(1)这种玩意是不是元组，肯定不是啊，必须地写成(1,)）
+
+![1564057725011](assets/1564057725011.png)
+
+再来看看最后的管理界面的效果，居然报错了，来看看报错的原因
+
+![1564057852495](assets/1564057852495.png)
+
+看到这个报错，我们就明白了，```question_text```的两个属性冲突了，到底是要display还是editable
+
+这个时候，报错同时也给了具体的解决方案，说是需要用上```list_display_links``的属性
+
+![1564057990199](assets/1564057990199.png)
+
+这句代码的作用你可以理解为将display属性的优先级降为0，当有冲突的时候，优先选另外一个属性使用。
+
+再来看看最终的效果，终于，一个像模像样的后台帖子管理系统出来了：
+
+![1564058067603](assets/1564058067603.png)
+
+&nbsp;
+
+当然了，帖子的评论也值得弄好管理页面，详细的信息也应该弄出来，不然怎么封号一些恶意发言的用户
+
+![1564058234599](assets/1564058234599.png)
+
+但是我们可以思考一下，我们先把这些评论的原帖放出来，发言者也放出来，然后思考一下评论本身的管理。
+
+我们当吧主的时候，是不是只能删掉评论啊，编辑评论肯定是不行的，肯定被管理者故意修改发言抹黑，所以我们评论所有的参数都不可加入编辑列表。
+
+这样一来，我们的评论管理视图模型代码也出来了：
+
+![1564058511222](assets/1564058511222.png)
+
+看看最终的评论管理页面：
+
+![1564058527155](assets/1564058527155.png)
+
+但是，这还没完，我们的帖子数量只会越来越多，评论数量也会更加的多
+
+我们是不是应该上线一下搜索功能，用来定向对违禁词的评论或者帖子名字进行删帖?
+
+这个搜索功能就有```search_fields```来完成，同样是将你支持搜索的字段添加进去，但是只仅限于文本类字段：
+
+![1564060416320](assets/1564060416320.png)
+
+这个时候刷新网页，你会发现多出来了一个搜索栏，可以支持查找过滤了：
+
+![1564060498683](assets/1564060498683.png)
+
+&nbsp;
+
+所以，管理页面实际上也是可以配置的，我们查看源码，配置参数是非常非常多的：
+
+![1564060548791](assets/1564060548791.png)
+
+我们可以在后面的锻炼实战中，慢慢地去了解这些管理页面模板的使用！
+
+&nbsp;
+
+#### 15.搞定首页
+
+现在，我们的项目已经完成了一大半了，我们只剩下两个部分来完成本次的BBS项目。
+
+就是论坛首页的前端页面的编写，还有发新帖子的逻辑视图函数。
+
+这是一个挑战，挑战我们自主去使用模板语言编写首页，挑战我们自主用Python语言亲自写出发帖子的提交逻辑，如果你看得懂读得懂我这篇笔记，这两个部分的内容对你来说压根就不难。
+
+所以，让我们一起加油吧！我稍后会在后面放出我的代码截图，但是我不会做任何解释。
+
+&nbsp;
+
+代码截图概览：
+
+![1564136530806](assets/1564136530806.png)
+
+![1564136543341](assets/1564136543341.png)
+
+首页效果图概览：
+
+![1564136576386](assets/1564136576386.png)
+
+&nbsp;
+
+#### 16.最终总结
+
+这一路走来，我们Django的快速入门就走到了尾声。
+
+如果你自己亲自写出来了index视图函数与模板代码，那么恭喜你，你也拥有了入门的门槛。
+
+现在我们回顾一下BBS应用设计过程中一些需要记忆的项目过程与函数方法。
+
+&nbsp;
+
+大概的项目设计过程：
+
+```
+①创建Django项目叫做myproject：django-admin startproject myproject
+②先运行Django项目会产生db.sqlite3文件：python manage.py runserver
+③添加一个应用叫做bbs：python manage.py startapp bbs
+④在bbs/models.py给应用创造模型，CharFiled、DateTimeField、ForeignKey等
+⑤将bbs应用安装到Djano项目：将bbs.apps.BbsConfig加入settings.py文件
+⑥根据模型激活应用数据库：python manage.py makemigrations
+⑦将应用数据库迁移到Django项目：python manage.py migrate
+⑧使用QuerySet API的方式添加数据：python manage.py shell
+⑨路由设计的时候别忘了给总urls.py文件添加应用的urls：path('bbs/', include('bbs.urls'))
+⑩后台管理模型的一些有用的参数：list_display、list_editable、list_display_links、search_fields
+```
+
+&nbsp;
+
+视图函数中需要注意的模块方法：
+
+```
+①将变量传递给模板的便捷函数方法：from django.shortcuts import render
+return render(request,'bbs/index.html',{'latet_bbs_list':latet_bbs_list})
+用法：先request，再要传递到的模板文件，最后是要传递过去的变量参数
+
+②获取一个对象，如果不存在就抛出404异常的便捷函数方法：from django.shortcuts import get_object_or_404
+question = get_object_or_404(Question, pk=question_id)
+用法：先选定模型，也就是确定好数据表，然后根据pk抓取其中的一条数据，找不到就404
+
+③重定向到一个指定的网页,一般用于提交数据后的刷新网页行为：
+from django.http import HttpResponseRedirect, from django.urls import reverse
+return HttpResponseRedirect(reverse('bbs:detail', args=(bbs.id,)))
+用法：第一个参数填写视图函数，会自动解析成url跳转，如果这个视图有参数，用上args参数填参数
+
+④在前端网页中使用表单用POST提交数据：<form action="{% url 'bbs:reply' bbs.id %}" method="POST">
+先用url参数，代表一个参数，后面都是它的参数，用视图函数与参数，目的是解析出完整的url地址
+用法：使用POST提交表单数据后，在python中使用request.POST获取表单的value值
+```
+
+&nbsp;
+
+模板设计中需要注意的语法：
+
+```
+for循环：
+    {% for x in x_list %}
+    {% endfor %}
+    
+if循环：
+	{% if x_list %}
+	{% elif %}
+	{% else %}
+	{% endif %}
+	
+变量传值：
+	{{aaa}}
+	
+打印for循环次数技巧：
+	{{ forloop.counter }}
+```
+
+&nbsp;
+
+希望大家将这些语法熟记于心中，这些是学习Django进阶操作的基石！我们在下一篇博客中会针对bbs应用进行一个高级拓展与进阶实战，敬请大家多多关注！
 
