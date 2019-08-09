@@ -1447,7 +1447,7 @@ def topic(request):
 
 ![1563987163290](assets/1563987163290.png)
 
-现在你可以自己启动```python manage.py runserve```来验证路由是否正常了！
+现在你可以自己启动```python manage.py runserver```来验证路由是否正常了！
 
 &nbsp;
 
@@ -2043,7 +2043,6 @@ for循环：
     
 if循环：
 	{% if x_list %}
-	{% elif %}
 	{% else %}
 	{% endif %}
 	
