@@ -1853,8 +1853,6 @@ request.POST()：参数是表单的name值，返回的结果是表单的value值
 ```python
 from django.contrib import admin
 
-from django.contrib import admin
-
 from .models import Question,Choice
 
 admin.site.register(Question)
