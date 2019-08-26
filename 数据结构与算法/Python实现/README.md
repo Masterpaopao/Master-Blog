@@ -16,38 +16,6 @@ Author： Masterpaopao
 
 转载请注明原Github出处，谢谢
 
-* [一\.算法引入](#%E4%B8%80%E7%AE%97%E6%B3%95%E5%BC%95%E5%85%A5)
-    * [1\.学习用处](#1%E5%AD%A6%E4%B9%A0%E7%94%A8%E5%A4%84)
-    * [2\.例题尝试](#2%E4%BE%8B%E9%A2%98%E5%B0%9D%E8%AF%95)
-    * [3\.内置性能分析](#3%E5%86%85%E7%BD%AE%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90)
-* [二\.顺序表](#%E4%BA%8C%E9%A1%BA%E5%BA%8F%E8%A1%A8)
-    * [1\.基本概念](#1%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5)
-    * [2\.深入理解](#2%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3)
-    * [3\.剖析List](#3%E5%89%96%E6%9E%90list)
-* [三\.链表](#%E4%B8%89%E9%93%BE%E8%A1%A8)
-    * [1\.基本介绍](#1%E5%9F%BA%E6%9C%AC%E4%BB%8B%E7%BB%8D)
-    * [2\.实现结点](#2%E5%AE%9E%E7%8E%B0%E7%BB%93%E7%82%B9)
-    * [3\.实现单链表](#3%E5%AE%9E%E7%8E%B0%E5%8D%95%E9%93%BE%E8%A1%A8)
-      * [1）is\_empty()](#1is_empty)
-      * [2）length()](#2length)
-      * [3）travel()](#3travel)
-      * [4）append()](#4append)
-      * [5）add()](#5add)
-      * [6）insert()](#6insert)
-      * [7）search()](#7search)
-      * [8）remove()](#8remove)
-      * [9）单链表总结](#9%E5%8D%95%E9%93%BE%E8%A1%A8%E6%80%BB%E7%BB%93)
-      * [10）单链表代码](#10%E5%8D%95%E9%93%BE%E8%A1%A8%E4%BB%A3%E7%A0%81)
-    * [4\.实现循环单链表](#4%E5%AE%9E%E7%8E%B0%E5%BE%AA%E7%8E%AF%E5%8D%95%E9%93%BE%E8%A1%A8)
-    * [5\.实现双向链表](#5%E5%AE%9E%E7%8E%B0%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8)
-* [四\.栈与队列](#%E5%9B%9B%E6%A0%88%E4%B8%8E%E9%98%9F%E5%88%97)
-    * [1\.快速了解](#1%E5%BF%AB%E9%80%9F%E4%BA%86%E8%A7%A3)
-    * [2\.实现栈](#2%E5%AE%9E%E7%8E%B0%E6%A0%88)
-    * [3\.实现单向队列](#3%E5%AE%9E%E7%8E%B0%E5%8D%95%E5%90%91%E9%98%9F%E5%88%97)
-    * [4\.实现双端队列](#4%E5%AE%9E%E7%8E%B0%E5%8F%8C%E7%AB%AF%E9%98%9F%E5%88%97)
-* [五\.排序算法](#%E4%BA%94%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95)
-* [六\.树](#%E5%85%AD%E6%A0%91)
-
 ## 一.算法引入
 
 #### 1.学习用处
@@ -507,7 +475,7 @@ _head指针肯定是不用的，是为了结点链接的顺畅性就搞一个出
 
 当我们设计出来length()方法之后，写遍历的代码就容易多了，无非就是多一个打印的过程：
 
-![1566551195872](assets/1566551195872.png)
+![1566644794144](assets/1566644794144.png)
 
 这一切设计的巧妙性都在于指针的运用，以及Node类的内部属性方法。
 
@@ -665,7 +633,7 @@ _head指针肯定是不用的，是为了结点链接的顺畅性就搞一个出
 
 &nbsp;
 
-##### 10）单链表代码
+##### 10）单链表源码
 
 ```python
 class Node:
@@ -702,6 +670,7 @@ class SingleLinkList:
         while cur != None:
             print(cur.elem,end=' ')
             cur = cur.next
+        print()
 
     def add(self,item):
         """链表头部添加元素"""
@@ -779,7 +748,578 @@ class SingleLinkList:
 
 #### 4.实现循环单链表
 
+什么是循环单链表，也叫单向循环链表，对比单链表多了一个特性，就是尾结点指向于头结点，形成一个闭环。
+
+实现它，就会多了一些难点，比如插入结点的时候，如果插入的是头或者尾，必然会牵扯到三个结点的变动。
+
+删除结点也是，删除头结点或尾结点，也会涉及到三个结点的变动，代码的实现会比较难。
+
+![1566642164360](assets/1566642164360.png)
+
+当然了，单向循环链表的几个方法都是和单向链表一样的：
+
+- is_empty() 判断链表是否为空
+- length()  返回链表的长度
+- travel() 遍历
+- add(item) 在头部添加一个节点
+- append(item) 在尾部添加一个节点
+- insert(pos, item) 在指定位置pos添加节点
+- remove(item)  删除一个节点
+- search(item)  查找节点是否存在
+
+主要是有几个地方需要修改，我一一讲诉：
+
+##### 1）构造方法
+
+既然我们这个成为了循环链表，那么我们想一想，如果我想创造一个只有结点的链表，我这个指针该怎么安排呢？
+
+![1566642631025](assets/1566642631025.png)
+
+所以我们在构造方法里面需要有个变动，有些人喜欢先创建一个空链表，但有些人就喜欢直接创建含有一个结点的链表啊，比如`sl = SingleCycleLinkList(node)`，所以是需要变动的：
+
+![1566643246413](assets/1566643246413.png)
+
+##### 2）length()
+
+is_empty()判空的方法并不需要改，直接判断self._head是不是None就完事。
+
+接下来看看length()，我们思考一下，这个方法的代码需要变动吗？
+
+![1566643661677](assets/1566643661677.png)
+
+看明白了吗?cur本来就指向于自己，所以这儿的length()毫无疑问会陷入死循环，所以我们需要修改一下了。
+
+![1566644612613](assets/1566644612613.png)
+
+为什么count不能从0开始，我们需要判断尾节点是否指向于头结点来记录出单向循环链表的长度。
+
+##### 3）travel()
+
+由于遍历不再基于尾结点是None，而是判断是否指向头结点来完成遍历，所以我们的travel()代码也是需要改动的:
+
+![1566645375910](assets/1566645375910.png)
+
+##### 4）append()
+
+append()被改是毫无疑问的，现在我们需要反思，添加尾节点的操作都会多出什么?
+
+是不是在原有的操作代码上加上新结点的next指向于self._head？
+
+分两步：1）将新结点的next指向于头结点；2）再将原来的尾节点的next指向于新结点
+
+![1566645913632](assets/1566645913632.png)
+
+##### 5）add()
+
+头部插入的话，比单链表的头部插入麻烦多了，因为这牵扯到三个地方的改动：
+
+（下面的顺序是思维误区的产物，初学者容易也陷入这个错误顺序）
+
+1）新结点的next指向于原来的头结点
+
+2）尾结点的next指向于新结点
+
+3）self._head指向于新结点
+
+![1566646452114](assets/1566646452114.png)
+
+但是我们思考一下，我们这个代码的写法是否是对的呢？
+
+观察最后两行的代码，我们发现cur.next和self._head两个变量的指针都指向了node，这个时候，我们是不是可以说这两个变量本质没区别？
+
+我们再来反思一下，我们在前面的代码中，遍历是怎么做的，是不是判断`cur.next != self._head`来得到尾节点？所以这一句条件为什么不能拿来直接用呢？
+
+所以我们需要修改一下顺序，使代码的顺序看起来更合理：
+
+1）新结点的next指向于原来的头结点
+
+2）self._head指向于新结点
+
+3）尾结点的next指向于self._head
+
+![1566646985006](assets/1566646985006.png)
+
+看到了吗，最后一行代码和循环的条件完成了神同步，这样才不会引起指针错乱！
+
+但是！我们又陷入了一个思维误区，之前的单链表头插法代码能够直接对空链表进行添加，难道，这儿也能进行直接头插法吗？很明显不行。
+
+所以这儿就出现了头插法代码实现的第二个大坑，极端情况的处理。所以最终的代码应该是这样的：
+
+![1566647689873](assets/1566647689873.png)
+
+可以说，写各种链表代码能够对自己的思维逻辑严密性进行一个有效的锻炼！
+
+请时时刻刻使用极端条件去检验代码的可行性！在这儿的循环单向链表中，极端情况分别是空链表，只有一个结点的链表！
+
+##### 6）insert()不变
+
+insert()的代码两个极端条件已经不需要修改了，因为这两个极端条件对应的add()和append()在上面我们已经修改了。
+
+我们现在再来看看中间插入的else代码部分:
+
+![1566648052824](assets/1566648052824.png)
+
+我们顺着这个逻辑，再走一遍，我们发现，else代码块的内容也不需要改，因为单向循环链表对比单链表只影响了头结点和尾结点，中间结点不受影响，对吗？
+
+##### 7）search()
+
+我在前面说过，由于循环单向链表的特性，遍历的条件判断发生了变化，所以这个search()代码肯定是要改的：
+
+![1566648919878](assets/1566648919878.png)
+
+##### 8）remove()
+
+现在，最难的地方来了，循环单向链表删除结点的操作，在你去尝试之前，一定要牢牢记住那几个极端情况，分别去验证一下，确保你代码的正确性。
+
+代码的编写步骤在基于单链表的remove()函数上，修改的大致步骤如下:
+
+1.添加上判空的条件，空链表不执行任何操作。
+
+2.删除多结点链表的头结点代码，先找到尾结点进行操作。
+
+3.break要修改成return，直接跳出整个函数，防止报错。
+
+4.尾结点不在遍历范围，自然在下面再单独操作。
+
+5.考虑到单结点的链表情况。
+
+![1566812991532](assets/1566812991532.png)
+
+测试代码的时候，根据下面几个重要的边界情况来处理。
+
+1.多结点链表的头结点和尾结点
+
+2.单结点的链表
+
+3.空链表
+
+##### 9）循环单链表源码
+
+```python
+class Node:
+    """结点"""
+    def __init__(self,elem):
+        self.elem = elem
+        self.next = None
+
+class SingleCycleLinkList:
+    """单向循环链表"""
+    def __init__(self,node=None):
+        self._head = node
+        # 只有一个结点的时候，是自己指向自己
+        if node:
+            node.next = node
+
+    def is_empty(self):
+        """单向循环链表是否为空"""
+        return not self._head
+    
+    def length(self):
+        """返回单向循环链表的长度"""
+        # 先判空，判断是否为空链表
+        if self.is_empty():
+            return 0
+        # 考虑到只有一个结点的单向循环链表，必须从1开始
+        count = 1
+        cur = self._head
+        while cur.next != self._head:
+            # 不是None就加上1
+            count += 1
+            # cur其实是结点对象，自然有next这个属性
+            cur = cur.next
+        return count
+
+    def travel(self):
+        """遍历整个单向循环链表"""
+        # 下面有个打印尾结点，空链表直接运行会报错
+        if self.is_empty():
+            return
+        cur = self._head
+        while cur.next != self._head:
+            print(cur.elem,end=' ')
+            cur = cur.next
+        # 退出循环之后，尾结点还未被打印
+        print(cur.elem)
+        print()
+
+    def add(self,item):
+        """单向循环链表头部添加元素"""
+        node = Node(item)
+        if self.is_empty():
+            self._head = node
+            node.next = node
+        else:
+            # 新结点的next指向于原来的头结点
+            node.next = self._head
+            cur = self._head
+            while cur.next != self._head:
+                cur = cur.next
+            # self._head指向于新结点
+            self._head = node
+            # 尾结点的next指向于self._head
+            cur.next = self._head
+
+    def append(self,item):
+        """单向循环链表尾部添加元素"""
+        node = Node(item)
+        if self.is_empty():
+            self._head = node
+            # 这一步可别忘了噢！
+            node.next = node
+        else:
+            cur = self._head
+            while cur.next != self._head:
+                cur = cur.next
+            # 在这一步才完成尾结点的添加
+            node.next = self._head
+            cur.next = node
+
+    def insert(self,pos,item):
+        """在指定位置添加元素"""
+        # 如果索引参数参小于或等于0，就头插入
+        if pos <= 0:
+            self.add(item)
+        # 如果索引参数大于链表的最大索引，就尾插入
+        elif pos > self.length()-1:
+            self.append(item)
+        # 如果索引参数正常，则执行中间插入
+        else:
+            node = Node(item)
+            # 此时不用count，要用index代表索引
+            index = 0
+            pre = self._head
+            while index < pos-1:
+                index +=1
+                # 将pre指针指向于目标位置的前结点
+                pre = pre.next
+            # 先将新结点的next指向于pre的next
+            node.next = pre.next
+            # 再将前结点的next指向于新结点
+            pre.next = node
+
+    def remove(self,item):
+        """删除某个结点"""
+        # 先进行判空，空链表会导致下面代码报错
+        if self.is_empty():
+            return
+        # 删除涉及到三个结点
+        pre = None
+        cur = self._head
+        while cur.next != self._head:
+            if cur.elem == item:
+                # 判断是不是头结点，特殊操作
+                if cur == self._head:
+                    # 找到尾结点
+                    rear = self._head
+                    while rear.next != self._head:
+                        rear = rear.next
+                    # 找到尾结点之后进行删除操作
+                    self._head = cur.next
+                    rear.next = self._head
+                # 中间结点操作跟单链表一样
+                else:
+                    pre.next = cur.next
+                # 这儿不能填break来停止循环，因为下面还有代码，继续执行会报错
+                # 应该是用reutrn直接结束整个函数
+                return
+            else:
+                pre = cur
+                cur = cur.next
+        # 还剩个尾结点没进行操作
+        if cur.elem == item:
+            # 如果是单结点的链表，进入这个条件
+            if not pre:
+                self._head = None
+            else:
+                # 如果是多结点，与上面的中间结点操作代码一致
+                pre.next = cur.next
+
+
+    def search(self,item):
+        """查找某个结点是否存在"""
+        # 先进行判空，决定是否决定遍历
+        if self.is_empty():
+            return False
+        cur = self._head
+        while cur.next != self._head:
+            if cur.elem == item:
+                return True
+            cur = cur.next
+        # 还是那句话，尾节点还未进行判断
+        if cur.elem == item:
+            return True
+        return False
+
+```
+
 #### 5.实现双向链表
+
+在上面，我们实现了单链表，单向循环链表，实现的过程略有波折，但是结果还是很棒的，可以尝试一下传说中的反转单链表题目，可以下去亲自尝试。
+
+现在，双向链表的需求就来了，它是怎么样的呢？
+
+![1566817182280](assets/1566817182280.png)
+
+可以看的出来的是，除了头结点和尾结点，其他的结点均有指向和被指向，这个代码实现可能就会难很多。
+
+我就画一张图，让你弄懂什么是双向链表，注意，这儿并不是循环的，循环双向链表的实现更加麻烦，但是在这儿我就不讲了。
+
+![1566817517930](assets/1566817517930.png)
+
+注意！前面的_head不是结点！你要搞清楚它的作用只是方便创造一个空链表，所以头结点是没有前结点的指针！
+
+##### 1）结点实现
+
+可以看出来，结点的类需要重新定义了，不再只有后指针，还应当有前指针：
+
+![1566818422866](assets/1566818422866.png)
+
+##### 2）is_empty()
+
+在实现之前，肯定还是要编写一个类，初始化方法还是一样的，搞一个哨兵`self._head`来承载链表的连接，然后判空肯定还是针对于这个哨兵`self._head`：
+
+![1566818872303](assets/1566818872303.png)
+
+##### 3）length()和travel()
+
+其实，我们反思一下，这个双向链表的长度和遍历，还是和单向链表一模一样的，对不对?
+
+因为这两个操作根本涉及不到前结点后结点，只是单纯的遍历:
+
+![1566819107985](assets/1566819107985.png)
+
+##### 5）append()
+
+尾插入对我们来说其实并没有多大的难度了，无非是考虑两种情况：
+
+1.空链表的情况
+
+2.多结点的双向链表的情况
+
+![1566824171099](assets/1566824171099.png)
+
+##### 6）add()
+
+既然写出来了append()，add()也没多难，还是两种情况：
+
+1.空链表的情况
+
+2.多结点的双向链表的情况
+
+![1566823219738](assets/1566823219738.png)
+
+根据这个图，我们可以在脑海里面想象，写出头插入的过程
+
+![1566823456007](assets/1566823456007.png)
+
+##### 7）insert()
+
+由于双向链表多了个前指针，即使是add()和append()都写好了，相比较单链表的代码，这次的else代码块需要做出改动。
+
+![1566823975955](assets/1566823975955.png)
+
+##### 8）search()
+
+搜索遍历的代码，其实不需要改，跟单链表的代码一样，毕竟只涉及到遍历+if判断：
+
+![1566831048159](assets/1566831048159.png)
+
+##### 9）remove()
+
+又到了喜闻乐见的环节，删除双向链表的某一个结点，当然了，它的思路肯定还是和单向链表差不多的，在它的基础上面再去修改即可，下面是示意图提供想象空间：
+
+![1566831336551](assets/1566831336551.png)
+
+正好反思一下，在单链表实现的代码中，我用了pre和cur两个变量，代表前结点和当前结点，问题就来了，在这个双向链表中，我还需要用pre变量吗？
+
+明显不用了，pre变量直接用`cur.prev`来代替，最后代码优化如下:
+
+![1566833927244](assets/1566833927244.png)
+
+##### 10）双向链表源码
+
+这样一来，我们的双向链表代码总是给实现了，当然了，还有双向循环链表，感兴趣的人可以自己尝试去实现，跟单向循环链表一样麻烦的，我就不在这儿多言了!
+
+（有BUG，将在后面修复，请敬请阅读！）
+
+```python
+class Node:
+    """实现双向链表的结点"""
+    def __init__(self,item):
+        self.elem = item
+        self.prev = None
+        self.next = None
+
+class DoubleLinkList:
+    def __init__(self,node=None):
+        self._head = node
+
+    def is_empty(self):
+        """判断双向链表是否为空"""
+        return not self._head
+    
+    def length(self):
+        """返回双向链表的长度"""
+        count = 0
+        cur = self._head
+        while cur != None:
+            # 不是None就加上1
+            count += 1
+            # cur其实是结点对象，自然有next这个属性
+            cur = cur.next
+        return count
+
+    def travel(self):
+        """遍历整个双向链表"""
+        cur = self._head
+        while cur != None:
+            print(cur.elem,end=' ')
+            cur = cur.next
+        print()
+
+    def detail(self):
+        """打印每个结点的具体情况"""
+        cur = self._head
+        while cur != None:
+            print(cur.elem,f'前结点：{cur.prev.elem if cur.prev else None}',f'后结点：{cur.next.elem if cur.next else None}')
+            cur = cur.next
+        print()
+        
+
+    def append(self,item):
+        """实现双向链表的尾插入"""
+        node = Node(item)
+        # 先解决空链表的情况
+        if self.is_empty():
+            self._head = node
+        # 后解决非空链表的尾插入
+        else:
+            cur = self._head
+            while cur.next != None:
+                cur = cur.next
+            # 开始尾插入操作
+            cur.next = node
+            node.prev = cur
+
+
+    def add(self,item):
+        """实现双向链表的头插入"""
+        node = Node(item)
+        if self.is_empty():
+            self._head = node
+        else:
+            node.next = self._head
+            self._head.prev = node
+            self._head = node
+
+    def insert(self,pos,item):
+        """中间位置插入结点"""
+        if pos <= 0 :
+            self.add(item)
+        elif pos > self.length()-1:
+            self.append(item)
+        else:
+            node = Node(item)
+            # 还是要找到前结点
+            index = 0
+            pre = self._head
+            while index < pos-1:
+                index += 1
+                pre = pre.next
+            # 开始插入结点,先将后指针搞定
+            node.next = pre.next
+            pre.next.prev = node
+            # 再将前指针搞定，完成插入
+            pre.next = node
+            node.prev = pre
+    
+    def search(self,item):
+        """查找某个节点是否存在"""
+        cur = self._head
+        while cur != None:
+            if cur.elem == item:
+                return True
+            cur = cur.next
+        return False
+
+    def remove(self,item):
+        """删除某个节点"""
+        cur = self._head
+        while cur != None:
+            if cur.elem == item:
+                # 如果是头结点,也符合单结点的双向链表情况
+                if cur == self._head:
+                    self._head = cur.next
+                # 如果是尾结点
+                elif cur.next == None:
+                    cur.prev.next = None
+                else:
+                    cur.prev.next = cur.next
+                    cur.next.prev = cur.prev
+                # 完成删除操作直接退出循环
+                break
+            else:
+                cur = cur.next
+
+```
+
+#### 4.检验链表代码
+
+你觉得我的代码就一定是对的吗，我们需要一个强大的测试用例。
+
+光有用例还不够，我们还需要知道各个结点的实时状态，确保我们链表的指针是正确的指向，所以这儿采用了三元表达式。
+
+##### 1）单链表
+
+![1566835942591](assets/1566835942591.png)
+
+##### 2）循环单链表
+
+![1566835964880](assets/1566835964880.png)
+
+##### 3）双向链表
+
+![1566835997650](assets/1566835997650.png)
+
+##### 4）测试用例
+
+我们对这三个链表代码都用上同一个测试用例，确保每个边界条件都覆盖到：
+
+1.单结点链表的删除
+
+2.空链表的头插入和尾插入
+
+3.中途插入
+
+4.删除中间结点
+
+5.删除头结点
+
+6.删除尾结点
+
+并在每一个阶段都能查到实时结点的状态：
+
+![1566836320597](assets/1566836320597.png)
+
+然后分别检查三段代码的测试用例结果，果不其然，在双向链表代码的测试中，我测试出问题了：
+
+![1566836516524](assets/1566836516524.png)
+
+很明显是头结点的处理，并没有处理它下一个结点的prev成为None：
+
+![1566837020933](assets/1566837020933.png)
+
+也就是说上面的双向链表源码是错误的，需要你自己手动修改！
+
+再来看看最后的测试用例结果，一切都回来了：
+
+![1566837076475](assets/1566837076475.png)
+
+到此为止，我们链表的学习就结束了，今后我们就带着这些链表代码去完成实际的应用场景，帮助业务设计！
+
+记住，多写多练，多默写，多关注边界条件的处理！
+
+&nbsp;
 
 ## 四.栈与队列
 
@@ -787,7 +1327,7 @@ class SingleLinkList:
 
 为什么要将栈与队列放到一起讲，是因为等一下实现它们的时候都用顺序表。
 
-1）栈
+##### 1）栈
 
 栈是一种特殊的容器，它最大的特点就是只允许在容器的顶端加入数据和取出数据。
 
@@ -797,7 +1337,7 @@ class SingleLinkList:
 
 ![1566468654678](assets/1566468654678.png)
 
-2）队列
+##### 2）队列
 
 当你明白栈的时候，队列就很好理解了，结合一下实际生活中的排队就知道了。
 
@@ -954,6 +1494,8 @@ class Deque:
 &nbsp;
 
 ## 五.排序算法
+
+
 
 ## 六.树
 
