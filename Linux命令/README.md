@@ -2,7 +2,7 @@
 
 以CentOS 6为环境，以下的命令都是我认为值得复习的。
 
-环境准备：VMware 15 pro + CentOS 6 + XShell6
+环境准备：VMware 15 pro + CentOS 6 + XShell6。
 
 &nbsp;
 
