@@ -591,3 +591,64 @@ https://leetcode-cn.com/problems/min-stack/solution/min-stack-fu-zhu-stackfa-by-
 这道题目其实很简单，主要考察你的思维，能不能想到使用两个栈配合来做题。记住，以后一旦要求O(1)时间访问的，说明用非遍历的方法去解题，你也没办法整一个O(1)时间复杂度的遍历方法，哈希表现在还没学，可以想到用空间换时间的方式去解题。
 
 &nbsp;
+
+##### 3）柱状图中最大的矩形
+
+接下来就来一道真正的难题，到底有多难呢，来看看以下图片：
+
+![1571661835314](assets/1571661835314.png)
+
+看到这个题目，你的条件反射是不是会让你想到前面做过的《盛水最多的容器》，使用双指针法来解答题目？
+
+为什么这道题不能用双指针法呢，不能参考《盛水最多的容器》的方法来写呢？
+
+注意审题，《盛水最多的容器》是两根相对很高的柱子之间的面积，中间是允许存在很矮的柱子的，水高度可以超过它们；而这道《柱状图中最大的矩形》就不是了，他是找能够勾勒出来矩形的最大面积，还能是两根相对很高柱子就能解决的事情吗？
+
+所以，这个小节讲解栈的内容，那么解题肯定是用栈，在你问出为什么之前，我们先来想想暴力法是怎么解决的：
+
+暴力法肯定是枚举法，左边界是i，范围取为(0,n-2)，右边界是j，范围取为(i+1,n-1)，然后就计算出每种(i,j)的面积，更新到max_area，最后的结果直接返回max_area即可。
+
+&nbsp;
+
+暴力法我就不解释了，在上面已经写过类似的程序，主要来讲解一下为什么要用栈来得到最优化的解法。
+
+https://leetcode-cn.com/problems/largest-rectangle-in-histogram/solution/zhu-zhuang-tu-zhong-zui-da-de-ju-xing-by-leetcode/
+
+我怕文字版你看不懂，直接打开这个链接，直接翻，看最后的O(n)时间复杂度的栈解法，先把动画给搞懂。
+
+&nbsp;
+
+##### 4）滑动窗口最大值
+
+经过了上面的大脑风暴之后，我们终于搞定了柱状图中最大的矩形，用栈来解决其实是个非常巧妙的方法，多多回顾几次也许你就突然懂了其中的奥妙之处。
+
+现在先来看看专门用队列解决的题目，就是滑动窗口的最大值。
+
+![1571664455120](assets/1571664455120.png)
+
+其实这个示例，就已经很通俗易懂的告诉你了整个代码的思路，每一轮循环返回一个最大值加入到数组。
+
+首先我们不着急使用双端队列，先来使用暴力法尝试一下:
+
+![1571665745343](assets/1571665745343.png)
+
+没错，就是传说的切片操作暴力法，代码通俗易懂，童叟无欺，再来看看提交后的时间复杂度：
+
+![1571665882325](assets/1571665882325.png)
+
+行吧，时间复杂度还是菜里菜气的，这也是双端队列出场的必要性。
+
+&nbsp;
+
+Python做双端队列的思路可以参考这个：
+
+https://leetcode-cn.com/problems/sliding-window-maximum/solution/shuang-duan-dui-lie-by-shiyymoonzhu-i7c4kquwyz/
+
+
+
+#### 3.课后作业
+
+ [https://leetcode.com/problems/design-circular-deque ](https://leetcode.com/problems/design-circular-deque) 
+
+ [https://leetcode.com/problems/trapping-rain-water/ ](https://leetcode.com/problems/trapping-rain-water/) 
+
