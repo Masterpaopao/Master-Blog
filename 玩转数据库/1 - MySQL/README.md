@@ -1,4 +1,4 @@
-# MySQL与Pymysql
+# 学习SQL
 
 MySQL是每个后端技术工程师必备的第一能力。
 
@@ -417,7 +417,218 @@ alter是针对于数据表的修改行为，可以详情了解如下：
 
 &nbsp;
 
-## 二.Pymysql
+## 二.再学SQL
+
+#### （1）SELECT关键字
+
+- 暴力检索：`select * from heros;`
+
+![image-20191217170004520](assets/image-20191217170004520.png)
+
+- 起别名检索：`select name as n , hp_max as hm, mp_max as mm from heros;`
+
+![image-20191217170026677](assets/image-20191217170026677.png)
+
+- 增加常数列标识搜索：`select '王者荣耀' as game_name , name from heros;`
+
+![image-20191217170050620](assets/image-20191217170050620.png)
+
+- 从结果中去掉重复的行：`select distinct role_main from heros;`
+
+![image-20191217170358568](assets/image-20191217170358568.png)
+
+- 将返回的结果进行排序，递增排序是ASC，递减是DESC：`select name, hp_max from heros order by hp_max desc`
+
+![image-20191217170910406](assets/image-20191217170910406.png)
+
+- 约束返回的数量：`select name , attack_max from heros order by attack_max desc limit 5;`
+
+![image-20191217171453011](assets/image-20191217171453011.png)
+
+- 根据数量随机返回结果：`select name , attack_range from heros where attack_range = '近战' order by RAND() limit 5;`
+
+![image-20191217180701177](assets/image-20191217180701177.png)
+
+sql关键字的顺序是不能颠倒的：
+
+```sql
+SELECT ... FROM ... WHERE ... GROUP BY ... HAVING ... ORDER BY ...
+```
+
+sql运行关键字的顺序也遵循如下：
+
+```sql
+FROM  >  WHERE  >  GROUP BY  >  HAVING  >  SELECT  >  DISTINCT  >  ORDER BY  >  LIMIT
+```
+
+关于SELECT关键字的脑图总结：
+
+![image-20191217172031876](assets/image-20191217172031876.png)
+
+#### （2）WHERE关键字
+
+- 大于值查询：`select name, hp_max from heros where hp_max > 6000;`
+
+![image-20191217173251526](assets/image-20191217173251526.png)
+
+- 中间值查询：`select name, hp_max from heros where hp_max between 5399 and 6811;`
+
+![image-20191217173352754](assets/image-20191217173352754.png)
+
+- 空值检查：`select name, birthdate from heros where birthdate is null;`
+
+![image-20191217173459260](assets/image-20191217173459260.png)
+
+- AND逻辑运算符：`select name, hp_max, mp_max from heros where hp_max > 8000 and mp_max > 1700;`
+
+![image-20191217174016475](assets/image-20191217174016475.png)
+
+- ()优先级最高，其次是AND，最后是OR：`select name, hp_max, mp_max from heros where ((hp_max + mp_max) > 8000 or hp_max > 6000) and mp_max > 1700 order by (hp_max+mp_max) desc;`
+
+![image-20191217174449195](assets/image-20191217174449195.png)
+
+如果我要查询主职业或副职业是法师或射手的英雄，上线时间不在2016-01-01到2017-01-01之间的：
+
+```sql
+select name, role_main, role_assist, birthdate 
+from heros
+where (role_main in ('法师', '射手') or role_assist in ('法师', '射手'))
+and birthdate not in between '2016-01-01' and '2017-01-01';
+```
+
+最初我是这么写的，很显然，报错了，因为我形成了Python的固定思维，使用了not in，实际sql并不是这么写的
+
+```sql
+select name, role_main, role_assist, birthdate 
+from heros
+where (role_main in ('法师', '射手') or role_assist in ('法师', '射手'))
+and DATE(birthdate) not between '2016-01-01' and '2017-01-01';
+```
+
+主要是注意两个点，不在between和and之间的，只需要前面加个not；日期类型可以用内置函数DATE()进行保险性质的转换，这是一个良好的习惯，因为有些日期的数据可能是2017-01-01 00:00:00，直接比较是会报错的。
+
+#### （3）通配符
+
+- 普通通配符，寻找包含'太'字的英雄：`select name from heros where name like '_%太%';`
+
+![image-20191217175919910](assets/image-20191217175919910.png)
+
+- 查找英雄名除了第一个字以外，包含'太'字的英雄：`select name from heros where name like '_%太%';`
+
+![image-20191217180814821](assets/image-20191217180814821.png)
+
+关于通配符的使用思考：
+
+通配符虽然有用，但最好不要产生依赖，尤其是在进行字符串匹配的时候，因为它需要消耗数据库更长的时间来进行全表扫描级别的匹配。
+
+如果你的like语句后面直接以%符号开头，就会直接进行全表扫描，效率很低，什么时候可以不全表扫描呢：当like语句后面不用通配符，并对字段进行索引的时候，才不会对全表进行扫描。
+
+真实业务场景优化：
+
+![image-20191217181821611](assets/image-20191217181821611.png)
+
+#### （4）函数
+
+内置函数可以分为四类：
+
+- 算术函数
+- 字符串函数
+- 日期函数
+- 转换函数
+
+---
+
+算术函数：对数字类型的字段进行算术预算
+
+- ABS()
+
+取绝对值：`select abs(-100)`
+
+![image-20191217183030186](assets/image-20191217183030186.png)
+
+- MOD()
+
+取余：`select mod(101, 3)`
+
+![image-20191217183100313](.assets/image-20191217183100313.png)
+
+- ROUND()
+
+四舍五入：`select round(23.888, 1)`
+
+![image-20191217183208766](assets/image-20191217183208766.png)
+
+---
+
+字符串函数：包含了字符串拼接、大小写转换、求长度、字符串替换等一系列的操作。
+
+- CONCAT()
+
+拼接字符串：`select concat(name,'是',role_main)  from heros;`
+
+![image-20191219093428232](assets/image-20191219093428232.png)
+
+- LENGTH()
+
+计算字符串的字节长度（一个汉字算三个字节）：`select length('我套123');`
+
+- CHAR_LENGTH()
+
+计算字符串的字符长度：`select char_length('我套123');`
+
+- UPPER()、LOWER()
+
+字符串的大小写转化：`select upper('master');`
+
+- REPLACE()
+
+替换函数，有3个参数：要替换的表达式或字段名，被替换的目标，替换后的结果
+
+`select replace("哇咔金尅欧酷列","酷列","裤链");`
+
+![image-20191219095308926](assets/image-20191219095308926.png)
+
+- SUBSTRING()
+
+截取字符串，有3个参数：代截取的表达式或字段名，开始截取的位置，想要截取的长度
+
+`select substring("哇咔金尅欧酷列",2,3);`
+
+![image-20191219095237205](assets/image-20191219095237205.png)
+
+---
+
+日期函数：对数据表中的日期进行处理
+
+主要重点关注的函数:
+
+- DATE()
+
+`SELECT DATE('2019-04-01 12:00:05');`
+
+![image-20191219095545834](assets/image-20191219095545834.png)
+
+这里需要注意的是，DATE 日期格式必须是 yyyy-mm-dd 的形式。如果要进行日期比较，就要使用 DATE 函数，不要直接使用日期与字符串进行比较。因为你无法保证你的时间字段的格式一定是对的，所以要养成习惯。
+
+- EXTRACT()
+
+抽取具体的年、月、日：`select extract(year from '2019-04-03');`
+
+---
+
+- 找到最大血量的英雄：`SELECT name, hp_max FROM heros where hp_max = (select max(hp_max) from heros);`
+
+![image-20191219100016764](assets/image-20191219100016764.png)
+
+- 显示2017年之前上线的所有英雄，没统计日期就不显示：`select name, hp_max, birthdate from heros where birthdate is not null and extract(year from birthdate) < '2017'; `
+
+![image-20191219101247770](assets/image-20191219101247770.png)
+
+#### （5）聚集函数
+
+等待更新
+
+## 三.Pymysql与Sqlalchemy
 
 #### 1.基本使用
 
@@ -490,3 +701,4 @@ pymysql提供了最为4种常规的方法，开启链接，事务操作，事务
 
 废话不多说，安装走起：`pip install sqlalchemy`
 
+sqlalchemy模块经过在公司的几周学习，已经用的可以说是非常熟练了，懒得记录笔记了，就这样吧！
