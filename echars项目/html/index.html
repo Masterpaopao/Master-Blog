@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>学习echarts</title>
+    <!-- 引入echarts文件，版本5.2.2 -->
+    <script src="js/echarts-5.2.2.min.js"></script>
+    <!-- 引入jquery文件，版本3.6.0 -->
+    <script src="js/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <!-- 定义两个dom，分别用于展示柱状图和折线图 -->
+    <div id="main" style="width: 2000px;height:970px;"></div>
+    <script type="text/javascript">
+
+    // 解析Python程序生成的json文件
+    var Ajax = function (){
+        $.getJSON("json/result.json", function (data){
+            console.log(data);
+            // 初始化echarts的一个折线图实例
+            var myChart = echarts.init(document.getElementById('main'));
+            window.onresize = function() {
+                myChart.resize();
+            };
+            var option = {
+                title: {
+                    text: '交易数据分析折线图'
+                },
+                legend: {
+                    data: [
+                        "交易价",
+                        "近三年最高价的线",
+						"近三年最低价的线",
+                        "近三年最高价的1/4线",
+                        "低于近三年最高价的1/4的数据"
+                    ]
+                },
+                  tooltip: {
+                    trigger: 'axis',
+                    formatter: '时间：{b}<br>' +
+                        '<font color="green">{a0}：{c0}</font><br>' +
+                        '{a1}：{c1}<br>' +
+                        '{a2}：{c2}<br>' +
+                        '{a3}：{c3}<br>' +
+                        '<font color="red">{a4}：{c4}</font><br>'
+                },
+                xAxis: {
+                    data: Object.values(data.trade_date)
+                },
+                yAxis: {},
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 0,
+                        end: 20
+                },
+                    {
+                        start: 0,
+                        end: 20
+                }
+              ],
+                series: [
+                    {
+                        name: '交易价',
+                        type: 'line',
+                        lineStyle: {
+                            normal: {
+								color: 'rgba(112,128,144,0.1)',
+							}
+                        },
+                        data: Object.values(data.price),
+                        emphasis:{
+                            label:{
+                                show: true,
+                            }
+                        }
+                    },
+                    {
+                        name: '近三年最高价的线',
+                        type: 'line',
+                        lineStyle: {
+                            normal: {
+								color: '#ffb8b8',
+							}
+                        },
+                        data: Object.values(data.year_3_max),
+                        emphasis:{
+                            label:{
+                                show: true,
+                            }
+                        }
+                    },
+                    {
+                        name: '近三年最低价的线',
+                        type: 'line',
+                        lineStyle: {
+                            normal: {
+								color: '#d8ffd8',
+							}
+                        },
+                        data: Object.values(data.year_3_min),
+                        emphasis:{
+                            label:{
+                                show: true,
+                            }
+                        }
+                    },
+                    {
+                        name: '近三年最高价的1/4线',
+                        type: 'line',
+                        lineStyle: {
+                            normal: {
+								color: '#c7c7ff',
+								type: 'dashed',
+							}
+                        },
+                        data: Object.values(data.year_3_max_1_4),
+                        emphasis:{
+                            label:{
+                                show: true,
+                            }
+                        }
+                    },
+                    {
+                        name: '低于近三年最高价的1/4的数据',
+                        type: 'scatter',
+                        itemStyle:{
+                            color: '#ff0000'
+                        },
+						symbolSize: 2,
+                        data: Object.values(data.is_year_3_max_1_4_hold),
+                    },
+                ]
+            };
+            myChart.setOption(option);
+        });
+    };
+    // 运行脚本
+    Ajax();
+
+    </script>
+</body>
+</html>
